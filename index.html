@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Heart Forming ❤️</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="heartCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById("heartCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let width, height, scale;
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = width + "px";
+      canvas.style.height = height + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      scale = Math.min(width, height) / 34;
+    }
+
+    window.addEventListener("resize", resize);
+    resize();
+
+    const points = 320;
+    const segments = 10;
+    const heartPoints = [];
+
+    // Same mathematical heart equation as the Python Turtle version.
+    for (let i = 0; i < points; i++) {
+      const a = 2 * Math.PI * i / points;
+      const x = 16 * Math.pow(Math.sin(a), 3);
+      const y = 13 * Math.cos(a)
+        - 5 * Math.cos(2 * a)
+        - 2 * Math.cos(3 * a)
+        - Math.cos(4 * a);
+
+      const L = 0.15 + Math.random() * (0.5 - 0.15);
+      const xi = x * (1 - L);
+      const yi = y * (1 - L);
+
+      heartPoints.push({ x, y, xi, yi });
+    }
+
+    let i = 0;
+    let j = 0;
+    let lastTime = 0;
+
+    // Approximately 1.8x the original Python animation speed.
+    const stepInterval = 20 / 1.8;
+
+    function drawSegment(point, f) {
+      const cx = width / 2;
+      const cy = height / 2;
+
+      const x1 = point.x + (point.xi - point.x) * f;
+      const y1 = point.y + (point.yi - point.y) * f;
+      const x2 = point.x + (point.xi - point.x) * (f + 0.1);
+      const y2 = point.y + (point.yi - point.y) * (f + 0.1);
+
+      // Convert mathematical coordinates to canvas coordinates.
+      const px1 = cx + x1 * scale;
+      const py1 = cy - y1 * scale;
+      const px2 = cx + x2 * scale;
+      const py2 = cy - y2 * scale;
+
+      const red = Math.round((1 - 0.6 * f) * 255);
+      const green = Math.round(0.7 * (1 - f) * 255);
+      const blue = Math.round(0.8 * (1 - f) * 255);
+
+      ctx.strokeStyle = `rgb(${red}, ${green}, ${blue})`;
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(px1, py1);
+      ctx.lineTo(px2, py2);
+      ctx.stroke();
+    }
+
+    function animate(time) {
+      if (!lastTime) lastTime = time;
+
+      if (time - lastTime >= stepInterval) {
+        const point = heartPoints[i];
+        const f = j / segments;
+        drawSegment(point, f);
+
+        j++;
+        if (j >= segments) {
+          j = 0;
+          i++;
+        }
+
+        if (i >= points) {
+          return;
+        }
+
+        lastTime = time;
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
